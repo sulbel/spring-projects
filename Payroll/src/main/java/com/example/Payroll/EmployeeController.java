@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+// This annotation indicates that the data returned by each method will be written straight into the response body
 @RestController
 class EmployeeController {
 
