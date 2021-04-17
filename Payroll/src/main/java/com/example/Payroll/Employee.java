@@ -5,9 +5,11 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.util.Objects;
 
+// @Entity is a JPA annotation to make this object ready for storage in a JPA-based data store
 @Entity
 public class Employee {
 
+    // More JPA annotations; indicates that attribute id is the primary key and automatically populated
     private @Id @GeneratedValue Long id;
     private String name;
     private String role;
