@@ -38,7 +38,7 @@ class EmployeeController {
     }
     // end::get-aggregate-root[]
 
-    // 
+    //
     @PostMapping("/employees")
     ResponseEntity<?> newEmployee(@RequestBody Employee newEmployee) {
         EntityModel<Employee> entityModel = assembler.toModel(repository.save(newEmployee));
@@ -59,22 +59,52 @@ class EmployeeController {
         return assembler.toModel(employee);
     }
 
+
     @PutMapping("/employees/{id}")
-    Employee replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
-        return repository.findById(id)
+    ResponseEntity<?> replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+
+        Employee updatedEmployee = repository.findById(id)
+                // find and return the employee object to update..
                 .map(employee -> {
                     employee.setName(newEmployee.getName());
                     employee.setRole(newEmployee.getRole());
                     return repository.save(employee);
                 })
+                // ..or create a new employee object with the supplied data
                 .orElseGet(() -> {
                     newEmployee.setId(id);
                     return repository.save(newEmployee);
                 });
+
+        // wrap the Employee object build from save() into an EntityModel object
+        EntityModel<Employee> entityModel = assembler.toModel(updatedEmployee);
+
+        return ResponseEntity
+                .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+                .body(entityModel);
     }
+//    @PutMapping("/employees/{id}")
+//    Employee replaceEmployee(@RequestBody Employee newEmployee, @PathVariable Long id) {
+//        return repository.findById(id)
+//                .map(employee -> {
+//                    employee.setName(newEmployee.getName());
+//                    employee.setRole(newEmployee.getRole());
+//                    return repository.save(employee);
+//                })
+//                .orElseGet(() -> {
+//                    newEmployee.setId(id);
+//                    return repository.save(newEmployee);
+//                });
+//    }
 
     @DeleteMapping("/employees/{id}")
-    void deleteEmployee(@PathVariable Long id) {
+    ResponseEntity<?> deleteEmployee(@PathVariable Long id) {
+
         repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
+
+    //void deleteEmployee(@PathVariable Long id) {
+    //    repository.deleteById(id);
+    //}
 }
