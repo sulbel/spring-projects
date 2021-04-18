@@ -16,9 +16,11 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 class EmployeeController {
 
     private final EmployeeRepository repository;
+    private final EmployeeModelAssembler assembler;
 
-    EmployeeController(EmployeeRepository repository) {
+    EmployeeController(EmployeeRepository repository, EmployeeModelAssembler assembler) {
         this.repository = repository;
+        this.assembler = assembler;
     }
 
     // Aggregate root resource
@@ -26,9 +28,7 @@ class EmployeeController {
     @GetMapping("/employees")
     CollectionModel<EntityModel<Employee>> all() {
         List<EntityModel<Employee>> employees = repository.findAll().stream()
-                .map(employee -> EntityModel.of(employee,
-                        linkTo(methodOn(EmployeeController.class).one(employee.getId())).withSelfRel(),
-                        linkTo(methodOn(EmployeeController.class).all()).withRel("employees")))
+                .map(assembler::toModel)
                 .collect(Collectors.toList());
 
         return CollectionModel.of(employees,
@@ -55,11 +55,8 @@ class EmployeeController {
         Employee employee = repository.findById(id)
                 .orElseThrow(() -> new EmployeeNotFoundException(id));
 
-        return EntityModel.of(employee,
-                // asks HATEOAS to build a link to the one() method and flag it as a self link
-                linkTo(methodOn(EmployeeController.class).one(id)).withSelfRel(),
-                // asks HATEOAS to build a link to the aggregate root and call it employees
-                linkTo(methodOn(EmployeeController.class).all()).withRel("employees"));
+        // delegate creation of the EntityModel to the assembler
+        return assembler.toModel(employee);
     }
 
     @PutMapping("/employees/{id}")
